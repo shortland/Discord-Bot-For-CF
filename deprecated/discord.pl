@@ -3,8 +3,8 @@
 use JSON;
 use File::Slurp;
 use URI::Encode qw(uri_encode uri_decode);
+use threads;
 use Try::Tiny;
-#use open ':std', ':encoding(UTF-8)'; # removes wideprint error, though when used, breaks translation. Rather have errors
 
 our @webhooks;
 our $runTime = 0;
@@ -14,43 +14,22 @@ our @race = ("TERRAN", "ZERG", "PROTOSS", "RANDOM");
 our @emojies = ("<:BRONZE3:278725418641522688>", "<:SILVER2:278725418813751297>", "<:GOLD1:278725419073536012>", "<:PLATINUM1:278725419056758784>", "<:DIAMOND1:278725418960551937>", "<:MASTER1:278725418679271425>", "<:GRANDMASTER:278725419186782208>");
 our @clanTags = ("CONFED", "CONFD", "XCFX");
 
-our $DISCORDAPI = "DISCORD API KEY (BOT KEY)";
-our $DAVID = read_file("david.txt");
-our $translateApiKey = "TRANSLATE API KEY (translate.yandex.net)";
-our $apiAIKey = "API.AI API KEY";
-our $twitchAPIKey = "TWITCH API KEY";
+our $DISCORDAPI = "abcd";
+our $DAVID = "BASE 64 encoded jpeg 128x128 px here - data:image/jpeg;base64,/9j/4AAQSk............";
+our $translateApiKey = "abcd";
+our $apiAIKey = "abcd";
+our $twitchAPIKey = "abcd";
 
 our $serverList = `curl -s -A "DiscordBot (http://ilankleiman.com, 4.0.0)" -H "Content-Type: application/x-www-form-urlencoded" -H "Authorization: Bot $DISCORDAPI" "https://discordapp.com/api/users/\@me/guilds" -L`;
 $serverList = decode_json($serverList);
 
-GetAndMakeHooks(MyBotName());
-
-sub MakeDiscordRequest {
-	my @parms = @_;
-	#parms[0] = endpoint /users/\@me
-	#parms[1] = 
-	#parms[2] = return decoded json, 0=no, 1=yes
-	my $userAgent = "DiscordBot (http://ilankleiman.com, 4.0.0)";
-	my $contentType = "Content-Type: application/x-www-form-urlencoded";
-	my $authorizeCode = "Authorization: Bot $DISCORDAPI";
-	my $baseURL = "https://discordapp.com/api";
-	my $response = `curl -s -A "$userAgent" -H "$contentType" -H "$authorizeCode" "${baseURL}@{parms[0]}" -L`;
-	return $response;
-}
-
-sub MyBotName {
-	my @parms = @_;
-	my $response = `curl -s -A "DiscordBot (http://ilankleiman.com, 4.0.0)" -H "Content-Type: application/x-www-form-urlencoded" -H "Authorization: Bot $DISCORDAPI" "https://discordapp.com/api/users/\@me" -L`;
-	$response = decode_json($response);
-	my $name = $response->{'username'};
-	return $name;
-}
+GetAndMakeHooks();
 
 sub WriteWebHook {
 	my @parms = @_;
 	for(my $j = 0; $j < scalar(@webhooks); $j++) {
 		if(!defined @parms[0] || !defined @parms[1] || @parms[0] =~ /^nil$/) {
-			#print "No message defined";
+			print "No message defined";
 			last;
 		}
 		elsif (length(@parms[0]) >= 2000) {
@@ -60,7 +39,6 @@ sub WriteWebHook {
 		else {
 			my @words = split / /, @webhooks[$j];
 			if (@words[0] =~ /^@parms[1]$/) {
-				#print @parms[0];
 				print $postMessage = `curl -s -A "DiscordBot (http://ilankleiman.com, 4.0.0)" -H "Content-Type: application/json" -X POST -d '{"content" : "@parms[0]"}' -H "Authorization: Bot $DISCORDAPI" "https://discordapp.com/api/webhooks/@words[1]/@words[2]" -L`;
 			}
 			else {
@@ -77,11 +55,11 @@ sub GetAndMakeHooks {
 		$webhookList = decode_json($webhookList);
 		@webhooks = ();
 		for(my $j = 0; $j < scalar(@{$webhookList}); $j++) {
-			if($webhookList->[$j]{'name'} =~ /^(@parms[0])$/) {
+			if($webhookList->[$j]{'name'} =~ /^DavidKimWH$/) {
 				@webhooks[$j] = $webhookList->[$j]{'channel_id'};
 			}
 			else {
-				#print "not " . $webhookList->[$j]{'name'} . " end not\n";
+				print "not " . $webhookList->[$j]{'name'} . " end not\n";
 			}
 		}
 		if($webhookList->[0]{'channel_id'} =~ /^()$/) {
@@ -96,7 +74,7 @@ sub GetAndMakeHooks {
 				if($channelID ~~ @webhooks) { }
 				else {
 					print "Making WebHook for channel " . $channelID . " \n";
-					`curl -s -H "Content-Type: application/json" -X POST -d '{"name":"@parms[0]", "avatar" : "$DAVID"}' -A "DiscordBot (ilankleiman.com, 4.0.0)" -H "Authorization: Bot $DISCORDAPI" "https://discordapp.com/api/channels/$channelID/webhooks" -L`;
+					`curl -s -H "Content-Type: application/json" -X POST -d '{"name":"DavidKimWH", "avatar" : "$DAVID"}' -A "DiscordBot (ilankleiman.com, 4.0.0)" -H "Authorization: Bot $DISCORDAPI" "https://discordapp.com/api/channels/$channelID/webhooks" -L`;
 				}
 			}
 		}
@@ -104,7 +82,7 @@ sub GetAndMakeHooks {
 		$webhookList = decode_json($webhookList);
 		@webhooks = ();
 		for(my $j = 0; $j < scalar(@{$webhookList}); $j++) {
-			if($webhookList->[$j]{'name'} =~ /^(@parms[0])$/) {
+			if($webhookList->[$j]{'name'} =~ /^DavidKimWH$/) {
 				@webhooks[$j] = $webhookList->[$j]{'channel_id'} . " " . $webhookList->[$j]{'id'} . " " . $webhookList->[$j]{'token'};
 			}
 		}
@@ -116,34 +94,18 @@ sub GetChannels {
 	my @parms = @_;
 
 	my $listed = @parms[0];
-	#print $listed->[0]{'id'}."]";
 	for(my $i = 0; $i < scalar(@{$listed}); $i++) {
 		my $channelList = `curl -s -A "DiscordBot (http://ilankleiman.com, 4.0.0)" -H "Content-Type: application/x-www-form-urlencoded" -H "Authorization: Bot $DISCORDAPI" "https://discordapp.com/api/guilds/$listed->[$i]{'id'}/channels" -L`;
-		my $channelListed = $channelList;
-		try {
-			$channelListed = decode_json($channelList);
-		} 
-		catch {
-			print "$channelList \n";
-			print "Error decoding json : $_\n";
-		};
-		for(my $j = 0; $j < scalar(@{$channelListed}); $j++) {
-			if(($channelListed->[$j]{'type'} ~~ "text")) {
-				my $channelID = $channelListed->[$j]{'id'};
+		my $channelList = decode_json($channelList);
+		for(my $j = 0; $j < scalar(@{$channelList}); $j++) {
+			if(($channelList->[$j]{'type'} ~~ "text")) {
+				my $channelID = $channelList->[$j]{'id'};
 				ReadChannel($channelID);
 			}
 		}
 	}
-	$runTime += 2;
+	$runTime += 3;
 	sleep(1.5);
-	if($runTime > 10) {
-		print time . "\n";
-		my $count = read_file("isdie.txt");
-		$count++;
-		write_file("isdie.txt", $count);
-		#CheckStreaming();
-		$runTime = 0;
-	}
 	return GetChannels(@parms[0]);
 }
 
@@ -185,8 +147,7 @@ sub ReadChannel {
 			$decodedMessage = decode_json($getMessage);
 		} 
 		catch {
-			print "Error reading channel json\n";
-			return;
+			print "Error decoding json : $_\n";
 		};
 		#print "yes";
 		if (defined($decodedMessage)) {
@@ -195,13 +156,11 @@ sub ReadChannel {
 				#print "looping through";
 				#print "Looping through them all " . $i . "\n";
 				my $user = uri_encode($decodedMessage->[$i]{'author'}{'username'});
-				my $attachments = $decodedMessage->[$i]{'attachments'}[0]{'url'};
-				# if($user =~ /^$/i) {
-				# 	#print "Oh i see me, lets skip this one.\n";
-				# 	next;
-				# }
-				# else 
-				{
+				if($user =~ /^DavidKimWH$/i) {
+					#print "Oh i see me, lets skip this one.\n";
+					next;
+				}
+				else {
 					my $messageID = $decodedMessage->[$i]{'id'};
 					my $messageContent = $decodedMessage->[$i]{'content'};
 
@@ -216,22 +175,6 @@ sub ReadChannel {
 					if($found =~ /^false$/) {
 						print "FILTER: " . $messageContent . "\n";
 						append_file("innovation.txt", $messageID."\n");
-
-						if ($attachments =~ /SC2Replay/) {
-							#download it
-							print "is attachment type replay\n";
-							`curl -s "$attachments" >output/testing.SC2Replay`;
-							# $replayData = qx("./parse.pl");
-							# print ">>".$replayData;
-							# #sleep(0.5);
-							# #$replayData =~ s/\\n/\\\\n/g;
-							
-							`./parse.pl`;
-							$balance = read_file("output/balance.txt");
-							$balance =~ s/\n/\\\\n/g;
-							WriteWebHook("`".$balance."\\nMUCH BALANCE!!!`", @parms[0]);
-						}
-
 						ParseMessage(lc($messageContent), $user, @parms[0]);
 					}
 					else {
@@ -256,8 +199,8 @@ sub ParseMessage {
 		WriteWebHook("~help - shows this \\n~roster - shows clan roster\\n~search sc2_name - shows some details about that starcraft user\\n~islive twitch_username - tells you if that person is currently live\\n~translate from_language to_language sentence_to_translate\\n~any other message with ~ preceding it - talk to bot :)", @parms[2]);
 	}
 	elsif ((index(@parms[0], "~roster") != -1) && (substr(@parms[0], 0, 1) =~ /^(~)$/) ){
-		#print "im doing parse";
-		my $data = `curl -s "http://ilankleiman.com/JoinMembers.php"`;
+		print "im doing parse";
+		my $data = `curl -s "http://ilankleiman.com/html_parser.php"`;
 		$data = decode_json($data);
 
 		my @searchParms = split(" ", @parms[0]);
@@ -273,7 +216,7 @@ sub ParseMessage {
 					$realL = uc($data->[$i]{'race'});
 				}
 				elsif (uc(@searchParms[1]) ~~ @clanTags) {
-					$realL = uc($data->[$i]{'clan_tag'});
+					$realL = uc($data->[$i]{'clantag'});
 				}
 				else {
 					WriteWebHook("I couldnt find that filter", @parms[2]);
@@ -281,14 +224,14 @@ sub ParseMessage {
 				}
 
 				if (uc(@searchParms[1]) =~ /^($realL)$/i) {
-					push(@people, "" . $league . " [" . $data->[$i]{'clan_tag'} . "] ". $data->[$i]{'name'}." (mmr: " . $data->[$i]{'mmr'} . ")\\n");
+					push(@people, "" . $league . " [" . $data->[$i]{'clantag'} . "] ". $data->[$i]{'name'}." (mmr: " . $data->[$i]{'mmr'} . ")\\n");
 				}
 			}
 		}
 		else {
 			for(my $i = 0; $i < scalar(@{$data}); $i++) {
 				my $league = GetLeagueNumber(uc($data->[$i]{'league'}));
-				push(@people, "" . $league . " [" . $data->[$i]{'clan_tag'} . "] ". $data->[$i]{'name'}." (mmr: " . $data->[$i]{'mmr'} . ")\\n");
+				push(@people, "" . $league . " [" . $data->[$i]{'clantag'} . "] ". $data->[$i]{'name'}." (mmr: " . $data->[$i]{'mmr'} . ")\\n");
 			}
 		}
 
@@ -352,26 +295,10 @@ sub ParseMessage {
 		}
 	}
 	elsif ((index(@parms[0], "~player") != -1) && (substr(@parms[0], 0, 1) =~ /^(~)$/) ){
-		my $data = `curl -s "http://ilankleiman.com/JoinMembers.php"`;
-		try {
-			$data = decode_json($data);
-		} 
-		catch {
-			print "couldnt get JoinMembers.php";
-			WriteWebHook("Exceeded max resources on host server", @parms[2]);
-			return;
-		};
+		my $data = `curl -s "http://ilankleiman.com/html_parser.php"`;
+		$data = decode_json($data);
 		@parms[0] =~ s/~player //g;
 		my $search = lc(@parms[0]);
-		if(index($search, "#") != -1) { 
-			##
-			#print "no error?";
-		}
-		else {
-			WriteWebHook("Please specify their Battle Tag #. ie: ~player Shortland#952", @parms[2]);
-			print "sending error";
-			return;
-		}
 		my $text = "";
 		my $found = "no";
 		for(my $i = 0; $i < scalar(@{$data}); $i++) {
@@ -392,23 +319,15 @@ sub ParseMessage {
 
 				$found = "yes";
 				my $league = GetLeagueNumber(uc($data->[$i]{'league'}));
-				$text .= "" . $league . "(".$data->[$i]{'tier'}.") __**" . $search . "**__ " . $race . "\\n";
-				$text .= " __Clan:__ " . $data->[$i]{'clan_tag'} . "\\n";
-				$text .= " __MMR:__ " . $data->[$i]{'mmr'} . "\\n\\n";
-
+				$text .= "" . $league . " __**" . $search . "**__ " . $race . "\\n";
+				$text .= " __Clan:__ " . $data->[$i]{'clantag'} . "\\n";
+				$text .= " __MMR:__ " . $data->[$i]{'mmr'} . "\\n";
 				$text .= " __Wins:__ " . $data->[$i]{'wins'} . "\\n";
 				$text .= " __Losses:__ " . $data->[$i]{'losses'} . "\\n";
-				$text .= " __Ties:__ " . $data->[$i]{'ties'} . "\\n";
-				$text .= " __Win Rate:__ " . ($data->[$i]{'win_rate'} * 100) . "%\\n\\n";
-
-				$text .= " __Highest Win Streak:__ " . $data->[$i]{'longest_win_streak'} . "\\n";
-				$text .= " __Current Win Streak:__ " . $data->[$i]{'current_win_streak'} . "\\n\\n";
-
-				$text .= " __Rank:__ #" . $data->[$i]{'current_rank'} . "\\n";
+				$text .= " __WinRate:__ " . $data->[$i]{'winRate'} . "%\\n";
 				$text .= " __Points:__ " . $data->[$i]{'points'} . "\\n";
-				$text .= " __Last 1v1:__ " . (scalar localtime $data->[$i]{'last_played_time_stamp'}) . "\\n\\n";
-				$text .= " __BattleNet Tag:__ " . $data->[$i]{'battle_tag'} . "\\n";
-				$text .= "http://us.battle.net/sc2/en" . $data->[$i]{'path'} . "\/\\n";
+				$text .= " __Last 1v1:__ " . (scalar localtime $data->[$i]{'last_played'}) . "\\n\\n";
+				$text .= "http://us.battle.net/sc2/en" . $data->[$i]{'profile_link'} . "\/\\n";
 				WriteWebHook($text, @parms[2]);
 			}
 		}
@@ -428,6 +347,7 @@ sub ParseMessage {
 
 		$myRes = $cleverRes;
 		$myRes =~ s/'//g;
+		print $myRes;
 		WriteWebHook($myRes, @parms[2]);
 	}
 	else {
@@ -435,30 +355,23 @@ sub ParseMessage {
 	}
 }
 
-sub CheckStreaming {
+sub checkStreaming {
 	my @parms = @_;
-	print "CHECKING FOR ACTIVE STREAMERS\n";
-	my $streamerList = read_file("streamers.txt");
-	my @streamers = split /\n/, $streamerList;
-	for (my $i = 0; $i < scalar(@streamers); $i++) {
-		if (GetGamePlaying(GetUserID(@streamers[$i])) =~ /^(-1)$/) { }
-		else {
-			print "https://twitch.tv/" . @streamers[$i] . " has started streaming " . GetGamePlaying(GetUserID(@streamers[$i]));
-		}
-	}
+
+	return getGamePlaying(getUserID(""));
 }
 
-sub GetUserID {
+sub getUserID {
 	my ($username) = @_;
-	my $res = `curl -s -H 'Accept: application/vnd.twitchtv.v5+json' -H 'Client-ID: $twitchAPIKey' -X GET https://api.twitch.tv/kraken/users?login=$username`;
+	my $res = `curl -H 'Accept: application/vnd.twitchtv.v5+json' -H 'Client-ID: $twitchAPIKey' -X GET https://api.twitch.tv/kraken/users?login=$username`;
 	my $decoded = decode_json($res);
 	my $userID = $decoded->{'users'}[0]{'_id'} . "\n";
 	return $userID;
 }
 
-sub GetGamePlaying {
+sub getGamePlaying {
 	my ($userID) = @_;
-	my $res = `curl -s -H 'Accept: application/vnd.twitchtv.v5+json' -H 'Client-ID: $twitchAPIKey' -X GET https://api.twitch.tv/kraken/streams/$userID`; 
+	my $res = `curl -H 'Accept: application/vnd.twitchtv.v5+json' -H 'Client-ID: $twitchAPIKey' -X GET https://api.twitch.tv/kraken/streams/$userID`; 
 	$res =~ s/null/"null"/g;
 	my $decoded = decode_json($res);
 	my $isLive = $decoded ->{'stream'};
@@ -471,17 +384,3 @@ sub GetGamePlaying {
 		return $game;
 	}
 }
-
-
-# check if widget exists 
-# if not, make it :
-# PATCH https://discordapp.com/api/v6/guilds/147698382092238848/embed
-# {"enabled":false,"channel_id":"1234567890"}
-# Authorization: your token
-# Content-Type: application/json
-
-# ok so now we have widget.
-# get list of online members through the widget json
-
-
-
