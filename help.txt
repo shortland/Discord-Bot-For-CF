@@ -1,0 +1,20 @@
+Full Commands:
+
+~roster
+~roster count league
+~roster count race
+~roster (race: terran,zerg,protoss,random)
+~roster (league: grandmaster,master,diamond...)
+
+~player Shortland#952
+
+~ping
+
+~translate english korean hello how are you?
+
+~chat hello how are you?
+
+~islive nathanias
+
+~streams all
+~streams live
