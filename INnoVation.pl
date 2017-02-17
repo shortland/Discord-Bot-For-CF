@@ -86,6 +86,7 @@ sub GetAndMakeHooks {
 		}
 	}
 	print "done.\n";
+	`curl -s --max-time 5 'http://138.197.50.244/DISCORD/ShowOnline.pl?version=$BALANCEVERSION'`;
 	GetChannels();
 }
 
@@ -98,7 +99,7 @@ sub GetChannels {
 	}
 
 	$runTime += 2;
-	if($runTime > 120) {
+	if($runTime > 60) {
 		print "reseting runtime ";
 		for(my $j = 0; $j < scalar(@channels); $j++) {
 			my $decodedChannel = MakeDiscordGet("/channels/@channels[$j]", "", "1");

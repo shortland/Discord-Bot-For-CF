@@ -9,7 +9,7 @@ our @ISA = qw(Exporter);
 #can be
 our @EXPORT_OK = qw($API_TWITCH $API_YANDEX $API_AI $API_DISCORD);
 #default
-our @EXPORT = qw($API_DISCORD);
+our @EXPORT = qw($API_TWITCH $API_YANDEX $API_AI $API_DISCORD);
 
 $API_YANDEX = "";
 $API_DISCORD = "";
