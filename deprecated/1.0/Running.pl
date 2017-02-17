@@ -4,7 +4,7 @@
 
 use CGI;
 # will kill running processes that match this keyword
-my $keyword = "INnoVation.pl"; #/usr/bin/php
+my $keyword = "Running.pl"; #/usr/bin/php
 my $kill, $password;
 
 BEGIN {
@@ -27,8 +27,8 @@ elsif($password !~ /^password$/) {
 }
 
 if($kill =~ /^restart$/) {
-	system('curl -s "http://138.197.50.244/DISCORD/Running.pl?password=password&kill=yes"');
-	system('nohup curl -s "http://138.197.50.244/DISCORD/Running.pl?password=password&kill=live"');
+	system('./Running.pl password=password&kill=yes');
+	system('nohup ./Running.pl password=password&kill=live');
 }
 
 my $currentlyRunning = `ps aux`;
@@ -43,23 +43,5 @@ if((index($currentlyRunning, "$keyword") != -1)) {
 				print "Killed Process (PID : " . $pid . ")";
 			}
 		}
-	}
-	elsif($kill =~ /^live$/) {
-		print "<br/>Process already running. Will not start it again.\n";
-	}
-}
-else {
-	print "Process is not running!\n";
-	if($kill =~ /^live$/) {
-		my @lines = split /\n/, $currentlyRunning;
-		foreach my $line (@lines) {
-			if((index($line, "$keyword") != -1)) {
-				my ($pid) = $line =~ /(\d+)/;
-				print `kill -9 $pid`;
-				print "Killed Process (PID : " . $pid . ")";
-			}
-		}
-		print "Starting Process up...\n";
-		print my $res = `nohup curl -s "http://138.197.50.244/DISCORD/INnoVation.pl"`;
 	}
 }

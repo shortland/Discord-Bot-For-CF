@@ -1,0 +1,17 @@
+Full Commands:
+
+~roster
+~roster count (league,race)
+~roster (terran,zerg,protoss,random)
+~roster (grandmaster,master,diamond...)
+
+~player Shortland#952
+
+~translate english korean hello how are you?
+
+~chat hello how are you?
+
+~streams all
+~streams live
+
+~ping
